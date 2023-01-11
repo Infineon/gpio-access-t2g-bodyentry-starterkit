@@ -1,6 +1,6 @@
 <img src="./media/ifx-logo-600.gif" align="right" width="150" />  
 
-#  GPIO LED 1 Traveo™ T2G Starter Kit (gpio-led-1-t2g-entry-starterkit)
+#  gpio-led-1-t2g-entry-starterkit
 **Simple example written Rust which shows an LED being controlled by a push button/switch.**
 
 ## Device  
