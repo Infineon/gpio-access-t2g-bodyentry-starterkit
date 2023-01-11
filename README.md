@@ -1,7 +1,7 @@
 <img src="./media/ifx-logo-600.gif" align="right" width="150" />  
 
 #  gpio-led-1-t2g-entry-starterkit
-**Simple example written Rust which shows an LED being controlled by a push button/switch.**
+**Simple example. written in Rust, which shows an LED being controlled by a push button/switch.**
 
 ## Device  
 The device used in this example is Traveo™ CYT2B75.
