@@ -1,7 +1,7 @@
-<img src="./Images/ifx-logo-600.gif" align="right" width="150" />  
+<img src="./media/ifx-logo-600.gif" align="right" width="150" />  
 
-#  Blinky 1 Traveo™ T2G Starter Kit
-**This example shows a simple LED blinking using a wait function written in Rust.**
+#  GPIO LED 1 Traveo™ T2G Starter Kit (gpio-led-1-t2g-entry-starterkit)
+**Simple example written Rust which shows an LED being controlled by a push button/switch.**
 
 ## Device  
 The device used in this example is Traveo™ CYT2B75.
