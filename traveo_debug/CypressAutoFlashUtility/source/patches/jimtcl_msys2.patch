@@ -1,0 +1,10 @@
+--- a/jimtcl/auto.def	2018-07-26 13:48:55.508224600 +0300
++++ b/jimtcl/auto.def	2018-07-26 12:55:13.780755100 +0300
+@@ -287,7 +287,6 @@
+ # libdep=list of 'define' symbols for dependent libraries
+ dict set extdb info {
+     binary   { dep pack }
+-    exec     { check {([have-feature vfork] && [have-feature waitpid]) || [have-feature system]} }
+     glob     { dep readdir }
+     load     { check {[have-feature dlopen-compat] || [cc-check-function-in-lib dlopen dl]} libdep lib_dlopen }
+     mk       { check {[check-metakit]} libdep lib_mk }

@@ -1,0 +1,20 @@
+[package]
+name = "traveo_rust_demo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cortex-m = "0.7.5"
+cortex-m-semihosting = {version = "0.3.1", features = ["jlink-quirks"]}
+panic-halt = "0.2.0"
+cyt2b7 = { path = "../t2g_pal_generator/output/cyt2b7",features = ["rt"] }
+cortex-m-rt = "0.7.0"
+
+
+[build-dependencies]
+cc = "1.0.73"
+
+[[bin]]
+name = "main"
+test = false
+bench = false

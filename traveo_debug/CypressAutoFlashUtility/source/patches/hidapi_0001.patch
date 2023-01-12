@@ -1,0 +1,22 @@
+--- a/mac/hid.c	2018-06-08 17:36:39.000000000 +0300
++++ b/mac/hid.c	2018-05-22 09:08:46.000000000 +0300
+@@ -31,6 +31,7 @@
+ #include <sys/time.h>
+ #include <unistd.h>
+ 
++
+ #include "hidapi.h"
+ 
+ /* Barrier implementation because Mac OSX doesn't have pthread_barrier.
+@@ -487,7 +488,10 @@
+ 			cur_dev->release_number = get_int_property(dev, CFSTR(kIOHIDVersionNumberKey));
+ 
+ 			/* Interface Number (Unsupported on Mac)*/
+-			cur_dev->interface_number = -1;
++#ifndef kUSBInterfaceNumber
++    #define kUSBInterfaceNumber         "bInterfaceNumber"
++#endif
++            cur_dev->interface_number = get_int_property(dev, CFSTR(kUSBInterfaceNumber));
+ 		}
+ 	}
+ 
