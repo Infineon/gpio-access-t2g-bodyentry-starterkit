@@ -7,207 +7,112 @@
     "version": "0.2.0",
     "configurations": [
         {
-            /* Configuration for the Traveo  */
+            /* Debug launch configuration for the Traveo(TM) II CM4 (slave) core  */
             "type": "cortex-debug",
             "gdbPath": "${workspaceRoot}/rust-gdb.bat",
             "request": "launch",
             "name": "openocd Debug M4 [slave]",
             "servertype": "openocd",
             "serverpath": "./traveo_debug/CypressAutoFlashUtility/bin/openocd.exe", 
-            //"serverpath": "c:/bin/util/infineon-openocd/bin/openocd.exe",
             "cwd": "${workspaceRoot}",
             "runToMain": true,
             "executable": "./target/thumbv7em-none-eabihf/debug/main",
             "loadFiles": [],
-            "configFiles" : ["interface/kitprog3.cfg","target/traveo2_2m.cfg"],
+            "configFiles" : ["interface/kitprog3.cfg","target/traveo2_1m_a0.cfg"],
             "searchDir" : ["./traveo_debug/CypressAutoFlashUtility/scripts"],
-            //"searchDir" : ["c:/bin/util/infineon-ocd/traveo_debug/scripts"],
             "device": "CYT2B75CAE_M4",
             "interface": "swd",
             "svdFile": "./cyt2b9.svd",
-            "showDevDebugOutput": true,
+            "showDevDebugOutput": "raw",
             "preLaunchCommands": ["monitor arm semihosting enable"],
             "targetProcessor": 1
 
         },
         {
-            /* Configuration for the Traveo  */
+            /* Release launch configuration for the Traveo(TM) II CM4 (slave) core  */
             "type": "cortex-debug",
             "gdbPath": "${workspaceRoot}/rust-gdb.bat",
             "request": "launch",
             "name": "openocd Release M4 [slave]",
             "servertype": "openocd",
             "serverpath": "./traveo_debug/CypressAutoFlashUtility/bin/openocd.exe", 
-            //"serverpath": "c:/bin/util/infineon-openocd/bin/openocd.exe",
             "cwd": "${workspaceRoot}",
             "runToMain": true,
             "executable": "./target/thumbv7em-none-eabihf/release/main",
             "loadFiles": [],
-            "configFiles" : ["interface/kitpgrog3.cfg","target/traveo2_2m.cfg"],
+            "configFiles" : ["interface/kitpgrog3.cfg","target/traveo2_1m_a0.cfg"],
             "searchDir" : ["./traveo_debug/CypressAutoFlashUtility/scripts"],
-            //"searchDir" : ["c:/bin/util/infineon-ocd/traveo_debug/scripts"],
             "device": "CYT2B75CAE_M4",
             "interface": "swd",
             "svdFile": "./cyt2b9.svd",
-            //"showDevDebugOutput": true,
+            "showDevDebugOutput": "raw",
             "preLaunchCommands": ["monitor arm semihosting enable"],
             "targetProcessor": 1
 
         },
         {
-       /* Configuration for the Traveo  */
-       "type": "cortex-debug",
-       "gdbPath": "${workspaceRoot}/rust-gdb.bat",
-       "request": "launch",
-       "name": "openocd Debug M0 [master]",
-       "servertype": "openocd",
-       "serverpath": "./traveo_debug/CypressAutoFlashUtility/bin/openocd.exe", 
-       //"serverpath": "c:/bin/util/infineon-openocd/bin/openocd.exe", 
-       "cwd": "${workspaceRoot}",
-       "preLaunchTask": "Cargo Build (debug)",
-       "runToMain": true,
-       "executable": "./target/thumbv6m-none-eabi/debug/main",
-       "loadFiles": ["./target/thumbv6m-none-eabi/debug/main","./target/thumbv7em-none-eabihf/debug/main"],
-       //"symbolFiles": [{"file": "./target/thumbv6m-none-eabi/debug/main"}],
-       "configFiles" : ["interface/kitprog3.cfg","target/traveo2_2m.cfg"],
-       "searchDir" : ["./traveo_debug/CypressAutoFlashUtility/scripts"],
-       //"searchDir" : ["c:/bin/util/infineon-ocd/traveo_debug/scripts"],
-       "device": "CYT2B75CAE_M0",
-       "interface": "swd",
-       "svdFile": "./cyt2b9.svd",
-       //"showDevDebugOutput": true,
-       "preLaunchCommands": ["monitor arm semihosting enable"],
-        "numberOfProcessors": 2,
-        "targetProcessor": 0,
-        "chainedConfigurations": {
-            "enabled": true,
-            "detached":false,
-            "waitOnEvent": "postInit",
-            "lifeCycleShared": true,
-            "launches": [
-                {
+            /* Debug launch configuration for the Traveo(TM) II CM0 (master) core  */
+            "type": "cortex-debug",
+            "gdbPath": "${workspaceRoot}/rust-gdb.bat",
+            "request": "launch",
+            "name": "openocd Debug M0 [master]",
+            "servertype": "openocd",
+            "serverpath": "./traveo_debug/CypressAutoFlashUtility/bin/openocd.exe", 
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "Cargo Build (debug)",
+            "runToMain": true,
+            "executable": "./target/thumbv6m-none-eabi/debug/main",
+            "loadFiles": ["./target/thumbv6m-none-eabi/debug/main","./target/thumbv7em-none-eabihf/debug/main"],
+            "configFiles" : ["interface/kitprog3.cfg","target/traveo2_2m.cfg"],
+            "searchDir" : ["./traveo_debug/CypressAutoFlashUtility/scripts"],
+            "device": "CYT2B75CAE_M0",
+            "interface": "swd",
+            "svdFile": "./cyt2b9.svd",
+            "showDevDebugOutput": "raw",
+            "preLaunchCommands": ["monitor arm semihosting enable"],
+            "numberOfProcessors": 2,
+            "targetProcessor": 0,
+            "chainedConfigurations": {
+                "enabled": true,
+                "detached":false,
+                "waitOnEvent": "postInit",
+                "lifeCycleShared": true,
+                "launches": [{
                     "name": "openocd Debug M4 [slave]"
-                }
-            ]
-        }
-    },
-
-    {
-        "type": "cortex-debug",
-        "gdbPath": "${workspaceRoot}/rust-gdb.bat",
-        "request": "launch",
-        "name": "openocd Release M0 [master]",
-        "servertype": "openocd",
-        "serverpath": "./traveo_debug/CypressAutoFlashUtility/bin/openocd.exe", 
-        //"serverpath": "c:/bin/util/infineon-openocd/bin/openocd.exe",
-        "cwd": "${workspaceRoot}",
-        "preLaunchTask": "Cargo Build (release)",
-        "runToMain": true,
-        "executable": "./target/thumbv6m-none-eabi/release/main",
-        "loadFiles": ["./target/thumbv6m-none-eabi/release/main","./target/thumbv7em-none-eabihf/release/main"],
-        //"symbolFiles": [{"file": "./target/thumbv6m-none-eabi/debug/main"}],
-        "configFiles" : ["interface/kitpgrog3.cfg","target/traveo2_2m.cfg"],
-        "searchDir" : ["./traveo_debug/CypressAutoFlashUtility/scripts"],
-        //"searchDir" : ["c:/bin/util/infineon-ocd/traveo_debug/scripts"],
-        "device": "CYT2B75CAE_M0",
-        "interface": "swd",
-        "svdFile": "./cyt2b9.svd",
-        "showDevDebugOutput": true,
-        "preLaunchCommands": ["monitor arm semihosting enable"],
-         "numberOfProcessors": 2,
-         "targetProcessor": 0,
-         "chainedConfigurations": {
-             "enabled": true,
-             "detached":false,
-             "waitOnEvent": "postInit",
-             "lifeCycleShared": true,
-             "launches": [
-                 {
-                     "name": "openocd Release M4 [slave]"
-                 }
-             ]
-         }
-     },
-     {
-        /* Configuration to debug using JLink + Segger GDB server
-        JLink treat the different core indipently and when connecting Cortex-M4, Jlink connect 
-        automatically to M0 to enable it. See https://wiki.segger.com/Infineon_Traveo_II_device_family
-        Due to the lack of syncronization between the two debugger some workaround need to be implemented.
-        In order to be sure that GDB is attached to M4 before starting the core first GDB for M4 is started and
-        then debugger of M0 is started.
-        */
-        "type": "cortex-debug",
-        "gdbPath": "${workspaceRoot}/rust-gdb.bat",
-        "request": "launch",
-        "preLaunchTask": "Cargo (debug) rtt",
-        "name": "jlink Debug M4 [master]",
-        "servertype": "blink",
-        "cwd": "${workspaceRoot}",
-        "runToMain": true,
-        "executable": "./target/thumbv7em-none-eabihf/debug/main",
-        "loadFiles": ["./target/thumbv6m-none-eabi/debug/main","./target/thumbv7em-none-eabihf/debug/main"],
-        "device": "CYT2B75CAE_M4",
-        "interface": "swd",
-        //"overrideRestartCommands" : ["monitor reset 1"],
-        "svdFile": "./cyt2b9.svd",
-        //"showDevDebugOutput": true,
-        "preLaunchCommands": ["monitor semihosting enable","monitor flash breakpoints = 1","monitor semihosting ioclient 2","monitor waithalt 10000"],
-        "preAttachCommands": ["monitor semihosting enable","monitor flash breakpoints = 1","break main","monitor semihosting ioclient 2","monitor waithalt 10000"],
-        "serverArgs": [
-            "-speed",
-             "1500",
-             "-nohalt",
-             "-strict"
-        ],
-        "chainedConfigurations": {
-            "enabled": true,
-            "detached":true,
-            "waitOnEvent": "postInit",
-            "lifeCycleShared": true,
-            "delayMs" : 0,
-            "launches": [
-                {
-                    "name": "jlink Debug M0 [slave]"
-                }
-            ]
+                }]
+            }
         },
-        "rttConfig": {
-            "enabled" : true,
-            "address": "auto",
-            "decoders": [{
-                "port": 0,
-                "type": "console"
-            }]
-         }
-
-    },
-     {
-        /*Configuration to debug using JLink + Segger GDB server
-        launched by M4 debugger configuration*/
-        "name": "jlink Debug M0 [slave]",
-        "type": "cortex-debug",
-        "gdbPath": "${workspaceRoot}/rust-gdb.bat",
-        "request": "launch",
-        "servertype": "alink",
-        "cwd": "${workspaceRoot}",
-        "runToMain": true,
-        
-        "executable": "./target/thumbv6m-none-eabi/debug/main",
-        "loadFiles": [],
-        "serverArgs": [
-            "-speed",
-             "1500",
-             "-strict"
-        ],
-        "device": "CYT2B75CAE_M0",
-        "interface": "swd",
-        "svdFile": "./cyt2b9.svd",
-        //"showDevDebugOutput": true,
-        "preLaunchCommands": ["monitor semihosting enable","monitor flash breakpoints = 1","monitor semihosting ioclient 2"],
-
-
-     },
-
-
+        {
+            /* Release launch configuration for the Traveo(TM) II CM0 (master) core  */
+            "type": "cortex-debug",
+            "gdbPath": "${workspaceRoot}/rust-gdb.bat",
+            "request": "launch",
+            "name": "openocd Release M0 [master]",
+            "servertype": "openocd",
+            "serverpath": "./traveo_debug/CypressAutoFlashUtility/bin/openocd.exe", 
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "Cargo Build (release)",
+            "runToMain": true,
+            "executable": "./target/thumbv6m-none-eabi/release/main",
+            "loadFiles": ["./target/thumbv6m-none-eabi/release/main","./target/thumbv7em-none-eabihf/release/main"],
+            "configFiles" : ["interface/kitpgrog3.cfg","target/traveo2_2m.cfg"],
+            "searchDir" : ["./traveo_debug/CypressAutoFlashUtility/scripts"],
+            "device": "CYT2B75CAE_M0",
+            "interface": "swd",
+            "svdFile": "./cyt2b9.svd",
+            "showDevDebugOutput": "raw",
+            "preLaunchCommands": ["monitor arm semihosting enable"],
+            "numberOfProcessors": 2,
+            "targetProcessor": 0,
+            "chainedConfigurations": {
+                "enabled": true,
+                "detached":false,
+                "waitOnEvent": "postInit",
+                "lifeCycleShared": true,
+                "launches": [{
+                    "name": "openocd Release M4 [slave]"
+                }]
+            }
+        },
     ]
 }
