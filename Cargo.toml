@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 cortex-m = "0.7.5"
-cortex-m-semihosting = { sversion = "0.3.1" }
+cortex-m-semihosting = { version = "0.3.1" }
 panic-halt = "0.2.0"
 cyt2b7 = { path = "../t2g_pal_generator/output/cyt2b7",features = ["rt"] }
 cortex-m-rt = "0.7.0"
