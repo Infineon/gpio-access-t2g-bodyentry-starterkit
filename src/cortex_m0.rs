@@ -24,15 +24,14 @@
 // IN THE SOFTWARE.
 // ---
 
-use cyt2b7 as pac;
-use cortex_m::peripheral::NVIC;
 use panic_halt as _;
+use cortex_m::peripheral::NVIC;
 use cortex_m_rt::__RESET_VECTOR;
 
+use cyt2b7 as pac;
 use pac::gpio as GPIO;
 use pac::CPUSS;
 use pac::SCB;
-use pac::interrupt;
 
 /// Executed before the main function and does basic HW setup.
 ///
@@ -62,7 +61,7 @@ unsafe fn before_main(){
 fn main() -> ! {
 	unsafe{
         let gpio = &*pac::GPIO::PTR;
-        let cpuss =&*pac::CPUSS::PTR;
+        let cpuss =&*CPUSS::PTR;
 
         (*cpuss)
             .cm0_system_int_ctl[27]
