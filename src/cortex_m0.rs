@@ -25,15 +25,15 @@
 // ---
 
 use panic_halt as _;
-use cortex_m::peripheral::NVIC;
 use cortex_m_rt::__RESET_VECTOR;
+use cortex_m_semihosting::hprintln;
 
 use cyt2b7 as pac;
 use pac::gpio as GPIO;
 use pac::CPUSS;
 use pac::SCB;
 
-/// Executed before the main function and does basic HW setup.
+/// Executes before the main function and can be used for HW initialization.
 ///
 /// 1. Sets up the interrupt vector tables for both the Cortex-M0+ (CM0) and
 ///    Cortex-M4 (CM4) CPU cores
@@ -53,33 +53,31 @@ unsafe fn before_main(){
         .write(|w|  w.bits(0x10008000) );
     
     // Start the CM4 core
-    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w|  w.bits(0x05fa0003) );  
+    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w|  w.bits(0x05fa0003) );
+    _ = hprintln!("! CM0: before_main(): Harware initialization complete...");
 }
 
 /// CM0 "main" function
+/// 
+/// Demonstrates `unsafe` access to perihpheral registers.
+/// The demo turns on LED1 (port 12, pin 2) by default and turns it off as
+/// long as SW1 (port 7, pin 0) is kept pressed.
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    _ = hprintln!("! CM0: Entering main()...");
 	unsafe{
         let gpio = &*pac::GPIO::PTR;
-        let cpuss =&*CPUSS::PTR;
-
-        (*cpuss)
-            .cm0_system_int_ctl[27]
-            .write(|w|{ w.cpu_int_idx().bits(3) });
-        (*cpuss)
-            .cm0_system_int_ctl[27]
-            .write(|w|{ w.cpu_int_valid().bit(true) });
-
-        NVIC::unmask(pac::Interrupt::CPUINT_IDX0);
                 
-
         configure_led(gpio);
-        configure_button(gpio);
+        configure_switch(gpio);
         
         loop {
-                // TODO: demo logic
-                // 1. Turn on LED by default
-                // 2. Turn it off if the button is pressed...
+                if (*gpio).prt7.in_.read().in0().bit_is_clear() {
+                    (*gpio).prt12.out_inv.write(|w| w.out2().bit(false));
+                }
+                else {
+                    (*gpio).prt12.out_inv.write(|w| w.out2().bit(true));
+                }
         }
 	}
 }
@@ -95,8 +93,8 @@ fn configure_led(gpio: *const GPIO::RegisterBlock) {
     }
 }
 
-/// Set-up the relevant GPIO port/pin for the button
-fn configure_button(gpio: *const GPIO::RegisterBlock) {
+/// Set-up the relevant GPIO port/pin for the switch
+fn configure_switch(gpio: *const GPIO::RegisterBlock) {
     let high_z_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::HIGHZ.into();
     unsafe {
         (*gpio)
