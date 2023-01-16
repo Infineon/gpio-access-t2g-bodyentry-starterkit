@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cortex-m = "0.7.5"
+cortex-m = { version = "0.7.5", features = ["critical-section-single-core"]}
 cortex-m-semihosting = { version = "0.3.1" }
 panic-halt = "0.2.0"
-cyt2b7 = { path = "../t2g_pal_generator/output/cyt2b7",features = ["rt"] }
+cyt2b7 = { path = "../t2g_pal_generator/output/cyt2b7", features = ["rt", "critical-section"] }
 cortex-m-rt = "0.7.0"
 
 
