@@ -10,7 +10,6 @@ panic-halt = "0.2.0"
 cyt2b7 = { path = "../t2g_pal_generator/output/cyt2b7", features = ["rt", "critical-section"] }
 cortex-m-rt = "0.7.0"
 
-
 [build-dependencies]
 cc = "1.0.73"
 
