@@ -65,7 +65,7 @@ unsafe fn before_main(){
 #[cortex_m_rt::entry]
 fn main() -> ! {
     _ = hprintln!("! CM0: Entering main()...");
-	unsafe{
+	unsafe {
         let gpio = &*pac::GPIO::PTR;
                 
         configure_led(gpio);

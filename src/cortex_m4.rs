@@ -24,7 +24,7 @@
 // IN THE SOFTWARE.
 // ---
 
-use cortex_m::delay::Delay;
+use cortex_m::peripheral::syst::SystClkSource;
 use cortex_m_semihosting::hprintln;
 
 use cyt2b7 as pac;
@@ -46,23 +46,29 @@ fn main() -> ! {
 
     // Core peripheral registers...
     let cp = cortex_m::Peripherals::take().unwrap();
-    let  syst = cp.SYST;
+    let mut syst = cp.SYST;
 
     // Peripheral registers...
     let p = pac::Peripherals::take().unwrap();
 
     let gpio = p.GPIO;
     configure_led(&gpio);
-    
-    let mut delay = Delay::new(syst, 100_000_000);
+
+    // Configure the system timer to wrap around every 500ms
+    syst.set_clock_source(SystClkSource::Core);
+    syst.set_reload(8_000_000);
+    syst.enable_counter();
+
     let mut state = false;
-    loop  {
+    loop {
         // Set GPIO state
         gpio.prt19.out_inv.write(|w| w.out0().bit(state));
-        
-        // Wait and toggle GPIO state
-        delay.delay_ms(250);
-        state = state^true;
+
+        // Busy wait until the timer wraps around
+        while !syst.has_wrapped() {}
+
+        // Toggle GPIO state
+        state = state ^ true;
     }
 }
 
