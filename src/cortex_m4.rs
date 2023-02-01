@@ -56,7 +56,7 @@ fn main() -> ! {
 
     // Configure the system timer to wrap around every 500ms
     syst.set_clock_source(SystClkSource::Core);
-    syst.set_reload(8_000_000);
+    syst.set_reload(80_000_000);
     syst.enable_counter();
 
     let mut state = false;

@@ -27,10 +27,12 @@
 use panic_halt as _;
 use cortex_m_rt::__RESET_VECTOR;
 use cortex_m_semihosting::hprintln;
+use cortex_m::delay::Delay;
 
 use cyt2b7 as pac;
 use pac::gpio as GPIO;
 use pac::CPUSS;
+use pac::SRSS;
 use pac::SCB;
 
 /// Executes before the main function and can be used for HW initialization.
@@ -44,16 +46,45 @@ unsafe fn before_main(){
     let vtor_addr = &(__RESET_VECTOR) as *const unsafe extern "C" fn() -> !;
     (*SCB::PTR).vtor.write(vtor_addr as u32 - 4);
 
+    (*CPUSS::ptr()).cm4_clock_ctl.write(|w| w.fast_int_div().bits(0));
+    (*CPUSS::ptr()).cm0_clock_ctl.write(|w| w.peri_int_div().bits(1));
+    (*CPUSS::ptr()).cm0_clock_ctl.write(|w| w.slow_int_div().bits(0));
+
+    (*SRSS::ptr()).clk_path_select[1].write(|w| w.path_mux().bits(0));
+    (*SRSS::ptr()).clk_pll_config[0].write(|w| w.reference_div().bits(1));
+    (*SRSS::ptr()).clk_pll_config[0].write(|w| w.feedback_div().bits(40));
+    (*SRSS::ptr()).clk_pll_config[0].write(|w| w.output_div().bits(2));
+    (*SRSS::ptr()).clk_pll_config[0].write(|w|  w.enable().bit(true));
+    while (*SRSS::ptr()).clk_pll_status[0].read().locked().bit_is_clear() {}
+
+    (*SRSS::ptr()).clk_path_select[2].write(|w| w.path_mux().bits(0));
+
+    (*SRSS::ptr()).clk_root_select[0].write(|w| w.root_mux().bits(1));
+    (*SRSS::ptr()).clk_root_select[0].write(|w| w.root_div().bits(0));
+    (*SRSS::ptr()).clk_root_select[0].write(|w| w.enable().bit(true));
+
+    (*SRSS::ptr()).clk_root_select[1].write(|w| w.root_mux().bits(1));
+    (*SRSS::ptr()).clk_root_select[1].write(|w| w.root_div().bits(1));
+    (*SRSS::ptr()).clk_root_select[1].write(|w| w.enable().bit(true));
+
+    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(1));
+    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(2));
+
+    (*SRSS::ptr()).clk_ilo0_config.write(|w| w.enable().bit(true));
+    (*SRSS::ptr()).clk_ilo0_config.write(|w| w.ilo0_backup().bit(true));
+
+    (*SRSS::ptr()).wdt.ctl.write(|w| w.enable().bit(true));
+
     // Initialize the CM4 vector table in the CPUSS_CM4_VECTOR_TABLE_BASE register
     // with the start address of the vector table, which is at the beginning of the
     // FLASH assigned to the CM4 core (see the memory_cm4.x linker file).
     // This has to be done before starting the CM4 core.
     (*CPUSS::ptr())
         .cm4_vector_table_base
-        .write(|w|  w.bits(0x10008000) );
+        .write(|w| w.bits(0x10008000));
     
     // Start the CM4 core
-    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w|  w.bits(0x05fa0003) );
+    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w| w.bits(0x05fa0003) );
     _ = hprintln!("! CM0: before_main(): Harware initialization complete...");
 }
 
@@ -65,19 +96,35 @@ unsafe fn before_main(){
 #[cortex_m_rt::entry]
 fn main() -> ! {
     _ = hprintln!("! CM0: Entering main()...");
-	unsafe {
+
+    // Core peripheral registers...
+    let cp = cortex_m::Peripherals::take().unwrap();
+    let syst = cp.SYST;
+    
+    let mut delay = Delay::new(syst, 80_000_000);
+    let mut state = false;
+
+    unsafe {
         let gpio = &*pac::GPIO::PTR;
                 
         configure_led(gpio);
         configure_switch(gpio);
-        
+
+
+
         loop {
-                if (*gpio).prt7.in_.read().in0().bit_is_clear() {
+/*                 if (*gpio).prt7.in_.read().in0().bit_is_clear() {
                     (*gpio).prt12.out_inv.write(|w| w.out2().bit(false));
                 }
                 else {
                     (*gpio).prt12.out_inv.write(|w| w.out2().bit(true));
-                }
+                } */
+            // Set GPIO state
+            gpio.prt12.out_inv.write(|w| w.out2().bit(state));
+            
+            // Wait and toggle GPIO state
+            delay.delay_ms(500);
+            state = state^true;
         }
 	}
 }
