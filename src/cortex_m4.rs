@@ -62,7 +62,7 @@ fn main() -> ! {
     let mut state = false;
     loop {
         // Set GPIO state
-        gpio.prt19.out_inv.write(|w| w.out0().bit(state));
+        //gpio.prt19.out_inv.write(|w| w.out0().bit(state));
 
         // Busy wait until the timer wraps around
         while !syst.has_wrapped() {}

@@ -34,6 +34,7 @@ use pac::gpio as GPIO;
 use pac::CPUSS;
 use pac::SRSS;
 use pac::SCB;
+use cortex_m::peripheral::syst::SystClkSource;
 
 /// Executes before the main function and can be used for HW initialization.
 ///
@@ -45,6 +46,122 @@ unsafe fn before_main(){
     // Initialize the CM0 vector table address in the CM0P_SCS_VTOR register
     let vtor_addr = &(__RESET_VECTOR) as *const unsafe extern "C" fn() -> !;
     (*SCB::PTR).vtor.write(vtor_addr as u32 - 4);
+
+    //clock_setup();
+
+    // Initialize the CM4 vector table in the CPUSS_CM4_VECTOR_TABLE_BASE register
+    // with the start address of the vector table, which is at the beginning of the
+    // FLASH assigned to the CM4 core (see the memory_cm4.x linker file).
+    // This has to be done before starting the CM4 core.
+    (*CPUSS::ptr())
+        .cm4_vector_table_base
+        .write(|w| w.bits(0x10008000));
+    
+    // Start the CM4 core
+    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w| w.bits(0x05fa0003) );
+    _ = hprintln!("! CM0: before_main(): Harware initialization complete...");
+}
+
+/// CM0 "main" function
+/// 
+/// Demonstrates `unsafe` access to perihpheral registers.
+/// The demo turns on LED1 (port 12, pin 2) by default and turns it off as
+/// long as SW1 (port 7, pin 0) is kept pressed.
+#[cortex_m_rt::entry]
+fn main() -> ! {
+    _ = hprintln!("! CM0: Entering main()...");
+    let mut cp = cortex_m::Peripherals::take().unwrap();
+    //let syst = cp.SYST;
+
+    // Core peripheral registers...
+    //let mut delay = Delay::new(syst, 80_000_000);
+    let mut state = false;
+
+    unsafe {
+        let gpio = &*pac::GPIO::PTR;
+                
+        configure_led(gpio);
+        configure_switch(gpio);
+
+        loop {
+            // Set GPIO state
+            gpio.prt12.out_inv.write(|w| w.out2().bit(state));
+            
+            // Wait and toggle GPIO state
+            //delay.delay_ms(500);
+            custom_delay(&mut cp);
+            state = state^true;
+        }
+	}
+}
+
+fn custom_delay(cp: &mut cortex_m::Peripherals) {
+    const CYCLE: u64 = 40000000;
+    const SYST_RELOAD_MASK: u32 = 0xFFFFFF;
+    let mut cycle_rest = CYCLE;
+    let mut cycle_part: u32;
+    let syst = &mut cp.SYST;
+
+    syst.set_clock_source(SystClkSource::Core);
+
+    loop {
+        if cycle_rest > SYST_RELOAD_MASK as u64 {
+            cycle_part = SYST_RELOAD_MASK;
+            cycle_rest = cycle_rest - (SYST_RELOAD_MASK as u64);
+        }
+        else {
+            cycle_part = cycle_rest as u32;
+            cycle_rest = 0;
+        }
+
+        syst.disable_counter();
+        syst.set_reload(cycle_part);
+        syst.clear_current();
+        syst.enable_counter();
+        while !syst.has_wrapped() {}
+        syst.disable_counter();
+
+        if cycle_rest == 0 { break; }
+    } 
+}
+
+/// Set-up the relevant GPIO port/pin for the LED
+fn configure_led(gpio: *const GPIO::RegisterBlock) {
+    let strong_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::STRONG.into();
+    unsafe {    
+        (*gpio)
+            .prt12
+            .cfg
+            .write(|w| w.drive_mode2().bits(strong_value));
+    }
+}
+
+/// Set-up the relevant GPIO port/pin for the switch
+fn configure_switch(gpio: *const GPIO::RegisterBlock) {
+    let high_z_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::HIGHZ.into();
+    unsafe {
+        (*gpio)
+            .prt7
+            .cfg
+            .write(|w| { 
+                w.drive_mode0().bits(high_z_value);
+                w.in_en0().bit(true)
+            });
+    }
+}
+
+unsafe fn clock_setup() {
+    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(1));
+    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(2));
+
+    (*SRSS::ptr()).wdt.ctl.write(|w| w.enable().bit(false));
+
+    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(3));
+
+    (*SRSS::ptr()).clk_select.write(|w| w.lfclk_sel().bits(0));
+
+    (*CPUSS::ptr()).systick_ctl.write(|w| w.clock_source().bits(1));
+    (*CPUSS::ptr()).systick_ctl.write(|w| w.noref().bit(true));
 
     (*CPUSS::ptr()).cm4_clock_ctl.write(|w| w.fast_int_div().bits(0));
     (*CPUSS::ptr()).cm0_clock_ctl.write(|w| w.peri_int_div().bits(1));
@@ -73,83 +190,5 @@ unsafe fn before_main(){
     (*SRSS::ptr()).clk_ilo0_config.write(|w| w.enable().bit(true));
     (*SRSS::ptr()).clk_ilo0_config.write(|w| w.ilo0_backup().bit(true));
 
-    (*SRSS::ptr()).wdt.ctl.write(|w| w.enable().bit(true));
-
-    // Initialize the CM4 vector table in the CPUSS_CM4_VECTOR_TABLE_BASE register
-    // with the start address of the vector table, which is at the beginning of the
-    // FLASH assigned to the CM4 core (see the memory_cm4.x linker file).
-    // This has to be done before starting the CM4 core.
-    (*CPUSS::ptr())
-        .cm4_vector_table_base
-        .write(|w| w.bits(0x10008000));
-    
-    // Start the CM4 core
-    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w| w.bits(0x05fa0003) );
-    _ = hprintln!("! CM0: before_main(): Harware initialization complete...");
+    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(3));
 }
-
-/// CM0 "main" function
-/// 
-/// Demonstrates `unsafe` access to perihpheral registers.
-/// The demo turns on LED1 (port 12, pin 2) by default and turns it off as
-/// long as SW1 (port 7, pin 0) is kept pressed.
-#[cortex_m_rt::entry]
-fn main() -> ! {
-    _ = hprintln!("! CM0: Entering main()...");
-
-    // Core peripheral registers...
-    let cp = cortex_m::Peripherals::take().unwrap();
-    let syst = cp.SYST;
-    
-    let mut delay = Delay::new(syst, 80_000_000);
-    let mut state = false;
-
-    unsafe {
-        let gpio = &*pac::GPIO::PTR;
-                
-        configure_led(gpio);
-        configure_switch(gpio);
-
-
-
-        loop {
-/*                 if (*gpio).prt7.in_.read().in0().bit_is_clear() {
-                    (*gpio).prt12.out_inv.write(|w| w.out2().bit(false));
-                }
-                else {
-                    (*gpio).prt12.out_inv.write(|w| w.out2().bit(true));
-                } */
-            // Set GPIO state
-            gpio.prt12.out_inv.write(|w| w.out2().bit(state));
-            
-            // Wait and toggle GPIO state
-            delay.delay_ms(500);
-            state = state^true;
-        }
-	}
-}
-
-/// Set-up the relevant GPIO port/pin for the LED
-fn configure_led(gpio: *const GPIO::RegisterBlock) {
-    let strong_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::STRONG.into();
-    unsafe {    
-        (*gpio)
-            .prt12
-            .cfg
-            .write(|w| w.drive_mode2().bits(strong_value));
-    }
-}
-
-/// Set-up the relevant GPIO port/pin for the switch
-fn configure_switch(gpio: *const GPIO::RegisterBlock) {
-    let high_z_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::HIGHZ.into();
-    unsafe {
-        (*gpio)
-            .prt7
-            .cfg
-            .write(|w| { 
-                w.drive_mode0().bits(high_z_value);
-                w.in_en0().bit(true)
-            });
-        }
-    }
