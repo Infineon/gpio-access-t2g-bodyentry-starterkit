@@ -26,7 +26,6 @@
 
 use panic_halt as _;
 use cortex_m_rt::__RESET_VECTOR;
-use cortex_m::delay::Delay;
 use cortex_m_semihosting::hprintln;
 
 use cyt2b7 as pac;
@@ -63,15 +62,7 @@ unsafe fn before_main() {
 /// long as SW1 (port 7, pin 0) is kept pressed.
 #[cortex_m_rt::entry]
 fn main() -> ! {
-    use crate::get_core_frequency;
-
     _ = hprintln!("! CM0: Entering main()...");
-
-    // Core peripheral registers...
-    let cp = cortex_m::Peripherals::take().unwrap();
-    let syst = cp.SYST;
-
-    let mut delay = Delay::new(syst, get_core_frequency());
 
     unsafe {
         let gpio = &*pac::GPIO::PTR;
@@ -80,9 +71,12 @@ fn main() -> ! {
         configure_switch(gpio);
 
         loop {
-            // Invert GPIO state once every 500ms
-            gpio.prt12.out_inv.write(|w| w.out2().bit(true));
-            delay.delay_ms(500);
+            if (*gpio).prt7.in_.read().in0().bit_is_clear() {
+                (*gpio).prt12.out_clr.write(|w| w.out2().set_bit());
+            }
+            else {
+                (*gpio).prt12.out_set.write(|w| w.out2().set_bit());
+            }
         }
 	}
 }
