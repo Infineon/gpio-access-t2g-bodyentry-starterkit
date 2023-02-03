@@ -26,40 +26,34 @@
 
 use panic_halt as _;
 use cortex_m_rt::__RESET_VECTOR;
-use cortex_m_semihosting::hprintln;
 use cortex_m::delay::Delay;
+use cortex_m_semihosting::hprintln;
 
 use cyt2b7 as pac;
 use pac::gpio as GPIO;
-use pac::CPUSS;
-use pac::SRSS;
 use pac::SCB;
-use cortex_m::peripheral::syst::SystClkSource;
 
-/// Executes before the main function and can be used for HW initialization.
+/// Executes before the main function and can be used for HW initialization
 ///
-/// 1. Sets up the interrupt vector tables for both the Cortex-M0+ (CM0) and
-///    Cortex-M4 (CM4) CPU cores
-/// 2. Enables the CM4 CPU core (TODO: Check the "ENABLED" status of CM4 first)
+/// 1. Sets up the interrupt vector table Cortex-M0+ (CM0) core
+/// 2. Initializes clocks
+/// 3. Enables the Cortex-M4 (CM4) core
 #[cortex_m_rt::pre_init]
-unsafe fn before_main(){
+unsafe fn before_main() {
+    use crate::clock_init;
+    use crate::enable_cm4;
+
     // Initialize the CM0 vector table address in the CM0P_SCS_VTOR register
     let vtor_addr = &(__RESET_VECTOR) as *const unsafe extern "C" fn() -> !;
     (*SCB::PTR).vtor.write(vtor_addr as u32 - 4);
 
-    //clock_setup();
+    // Initialize clocks
+    clock_init();
 
-    // Initialize the CM4 vector table in the CPUSS_CM4_VECTOR_TABLE_BASE register
-    // with the start address of the vector table, which is at the beginning of the
-    // FLASH assigned to the CM4 core (see the memory_cm4.x linker file).
-    // This has to be done before starting the CM4 core.
-    (*CPUSS::ptr())
-        .cm4_vector_table_base
-        .write(|w| w.bits(0x10008000));
-    
-    // Start the CM4 core
-    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w| w.bits(0x05fa0003) );
-    _ = hprintln!("! CM0: before_main(): Harware initialization complete...");
+    // Enable the CM4 core
+    enable_cm4();
+
+    _ = hprintln!("! CM0: before_main(): Hardware initialization complete...");
 }
 
 /// CM0 "main" function
@@ -69,13 +63,15 @@ unsafe fn before_main(){
 /// long as SW1 (port 7, pin 0) is kept pressed.
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    use crate::get_core_frequency;
+
     _ = hprintln!("! CM0: Entering main()...");
-    let mut cp = cortex_m::Peripherals::take().unwrap();
-    //let syst = cp.SYST;
 
     // Core peripheral registers...
-    //let mut delay = Delay::new(syst, 80_000_000);
-    let mut state = false;
+    let cp = cortex_m::Peripherals::take().unwrap();
+    let syst = cp.SYST;
+
+    let mut delay = Delay::new(syst, get_core_frequency());
 
     unsafe {
         let gpio = &*pac::GPIO::PTR;
@@ -84,45 +80,11 @@ fn main() -> ! {
         configure_switch(gpio);
 
         loop {
-            // Set GPIO state
-            gpio.prt12.out_inv.write(|w| w.out2().bit(state));
-            
-            // Wait and toggle GPIO state
-            //delay.delay_ms(500);
-            custom_delay(&mut cp);
-            state = state^true;
+            // Invert GPIO state once every 500ms
+            gpio.prt12.out_inv.write(|w| w.out2().bit(true));
+            delay.delay_ms(500);
         }
 	}
-}
-
-fn custom_delay(cp: &mut cortex_m::Peripherals) {
-    const CYCLE: u64 = 40000000;
-    const SYST_RELOAD_MASK: u32 = 0xFFFFFF;
-    let mut cycle_rest = CYCLE;
-    let mut cycle_part: u32;
-    let syst = &mut cp.SYST;
-
-    syst.set_clock_source(SystClkSource::Core);
-
-    loop {
-        if cycle_rest > SYST_RELOAD_MASK as u64 {
-            cycle_part = SYST_RELOAD_MASK;
-            cycle_rest = cycle_rest - (SYST_RELOAD_MASK as u64);
-        }
-        else {
-            cycle_part = cycle_rest as u32;
-            cycle_rest = 0;
-        }
-
-        syst.disable_counter();
-        syst.set_reload(cycle_part);
-        syst.clear_current();
-        syst.enable_counter();
-        while !syst.has_wrapped() {}
-        syst.disable_counter();
-
-        if cycle_rest == 0 { break; }
-    } 
 }
 
 /// Set-up the relevant GPIO port/pin for the LED
@@ -148,47 +110,4 @@ fn configure_switch(gpio: *const GPIO::RegisterBlock) {
                 w.in_en0().bit(true)
             });
     }
-}
-
-unsafe fn clock_setup() {
-    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(1));
-    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(2));
-
-    (*SRSS::ptr()).wdt.ctl.write(|w| w.enable().bit(false));
-
-    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(3));
-
-    (*SRSS::ptr()).clk_select.write(|w| w.lfclk_sel().bits(0));
-
-    (*CPUSS::ptr()).systick_ctl.write(|w| w.clock_source().bits(1));
-    (*CPUSS::ptr()).systick_ctl.write(|w| w.noref().bit(true));
-
-    (*CPUSS::ptr()).cm4_clock_ctl.write(|w| w.fast_int_div().bits(0));
-    (*CPUSS::ptr()).cm0_clock_ctl.write(|w| w.peri_int_div().bits(1));
-    (*CPUSS::ptr()).cm0_clock_ctl.write(|w| w.slow_int_div().bits(0));
-
-    (*SRSS::ptr()).clk_path_select[1].write(|w| w.path_mux().bits(0));
-    (*SRSS::ptr()).clk_pll_config[0].write(|w| w.reference_div().bits(1));
-    (*SRSS::ptr()).clk_pll_config[0].write(|w| w.feedback_div().bits(40));
-    (*SRSS::ptr()).clk_pll_config[0].write(|w| w.output_div().bits(2));
-    (*SRSS::ptr()).clk_pll_config[0].write(|w|  w.enable().bit(true));
-    while (*SRSS::ptr()).clk_pll_status[0].read().locked().bit_is_clear() {}
-
-    (*SRSS::ptr()).clk_path_select[2].write(|w| w.path_mux().bits(0));
-
-    (*SRSS::ptr()).clk_root_select[0].write(|w| w.root_mux().bits(1));
-    (*SRSS::ptr()).clk_root_select[0].write(|w| w.root_div().bits(0));
-    (*SRSS::ptr()).clk_root_select[0].write(|w| w.enable().bit(true));
-
-    (*SRSS::ptr()).clk_root_select[1].write(|w| w.root_mux().bits(1));
-    (*SRSS::ptr()).clk_root_select[1].write(|w| w.root_div().bits(1));
-    (*SRSS::ptr()).clk_root_select[1].write(|w| w.enable().bit(true));
-
-    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(1));
-    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(2));
-
-    (*SRSS::ptr()).clk_ilo0_config.write(|w| w.enable().bit(true));
-    (*SRSS::ptr()).clk_ilo0_config.write(|w| w.ilo0_backup().bit(true));
-
-    (*SRSS::ptr()).wdt.lock.write(|w| w.wdt_lock().bits(3));
 }
