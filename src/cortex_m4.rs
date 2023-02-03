@@ -24,51 +24,45 @@
 // IN THE SOFTWARE.
 // ---
 
-use cortex_m::peripheral::syst::SystClkSource;
+use cortex_m::delay::Delay;
 use cortex_m_semihosting::hprintln;
 
 use cyt2b7 as pac;
 use pac::gpio as GPIO;
 
-/// Executes before the main function and can be used for HW initialization.
+/// Executes before the main function and can be used for HW initialization
 #[cortex_m_rt::pre_init]
 unsafe fn before_main() {
+    _ = hprintln!("! CM4: before_main(): Hardware initialization complete...");
 }
 
 /// CM4 "main" function
 /// 
 /// Demonstates how to use "safe rust" to access peripherals by taking ownership
 /// of the `cyt2b7::Peripherals` instance.
-/// The demo periodically toggles LED4 (port 19, pin 0).
+/// The demo periodically toggles LED4 (port 19, pin 0)
 #[cortex_m_rt::entry]
 fn main() -> ! {
+    use crate::get_core_frequency;
+
     _ = hprintln!("! CM4: Entering main()...");
 
-    // Core peripheral registers...
+    // Core peripheral registers
     let cp = cortex_m::Peripherals::take().unwrap();
-    let mut syst = cp.SYST;
+    let syst = cp.SYST;
 
-    // Peripheral registers...
+    // Peripheral registers
     let p = pac::Peripherals::take().unwrap();
 
     let gpio = p.GPIO;
     configure_led(&gpio);
 
-    // Configure the system timer to wrap around every 500ms
-    syst.set_clock_source(SystClkSource::Core);
-    syst.set_reload(80_000_000);
-    syst.enable_counter();
+    let mut delay = Delay::new(syst, get_core_frequency());
 
-    let mut state = false;
     loop {
-        // Set GPIO state
-        //gpio.prt19.out_inv.write(|w| w.out0().bit(state));
-
-        // Busy wait until the timer wraps around
-        while !syst.has_wrapped() {}
-
-        // Toggle GPIO state
-        state = state ^ true;
+        // Invert GPIO state once every 250ms
+        gpio.prt19.out_inv.write(|w| w.out0().bit(true));
+        delay.delay_ms(250);
     }
 }
 
