@@ -1,0 +1,4 @@
+{
+    "cortex-debug.variableUseNaturalFormat": false,
+    "rust-analyzer.checkOnSave.allTargets": false
+}

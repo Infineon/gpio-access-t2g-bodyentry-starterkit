@@ -30,31 +30,29 @@ use cortex_m_semihosting::hprintln;
 
 use cyt2b7 as pac;
 use pac::gpio as GPIO;
-use pac::CPUSS;
 use pac::SCB;
 
-/// Executes before the main function and can be used for HW initialization.
+/// Executes before the main function and can be used for HW initialization
 ///
-/// 1. Sets up the interrupt vector tables for both the Cortex-M0+ (CM0) and
-///    Cortex-M4 (CM4) CPU cores
-/// 2. Enables the CM4 CPU core (TODO: Check the "ENABLED" status of CM4 first)
+/// 1. Sets up the interrupt vector table Cortex-M0+ (CM0) core
+/// 2. Initializes clocks
+/// 3. Enables the Cortex-M4 (CM4) core
 #[cortex_m_rt::pre_init]
-unsafe fn before_main(){
+unsafe fn before_main() {
+    use crate::clock_init;
+    use crate::enable_cm4;
+
     // Initialize the CM0 vector table address in the CM0P_SCS_VTOR register
     let vtor_addr = &(__RESET_VECTOR) as *const unsafe extern "C" fn() -> !;
     (*SCB::PTR).vtor.write(vtor_addr as u32 - 4);
 
-    // Initialize the CM4 vector table in the CPUSS_CM4_VECTOR_TABLE_BASE register
-    // with the start address of the vector table, which is at the beginning of the
-    // FLASH assigned to the CM4 core (see the memory_cm4.x linker file).
-    // This has to be done before starting the CM4 core.
-    (*CPUSS::ptr())
-        .cm4_vector_table_base
-        .write(|w|  w.bits(0x10008000) );
-    
-    // Start the CM4 core
-    (*CPUSS::ptr()).cm4_pwr_ctl.write(|w|  w.bits(0x05fa0003) );
-    _ = hprintln!("! CM0: before_main(): Harware initialization complete...");
+    // Initialize clocks
+    clock_init();
+
+    // Enable the CM4 core
+    enable_cm4();
+
+    _ = hprintln!("! CM0: before_main(): Hardware initialization complete...");
 }
 
 /// CM0 "main" function
@@ -65,19 +63,20 @@ unsafe fn before_main(){
 #[cortex_m_rt::entry]
 fn main() -> ! {
     _ = hprintln!("! CM0: Entering main()...");
-	unsafe {
+
+    unsafe {
         let gpio = &*pac::GPIO::PTR;
                 
         configure_led(gpio);
         configure_switch(gpio);
-        
+
         loop {
-                if (*gpio).prt7.in_.read().in0().bit_is_clear() {
-                    (*gpio).prt12.out_inv.write(|w| w.out2().bit(false));
-                }
-                else {
-                    (*gpio).prt12.out_inv.write(|w| w.out2().bit(true));
-                }
+            if (*gpio).prt7.in_.read().in0().bit_is_clear() {
+                (*gpio).prt12.out_clr.write(|w| w.out2().set_bit());
+            }
+            else {
+                (*gpio).prt12.out_set.write(|w| w.out2().set_bit());
+            }
         }
 	}
 }
@@ -104,5 +103,5 @@ fn configure_switch(gpio: *const GPIO::RegisterBlock) {
                 w.drive_mode0().bits(high_z_value);
                 w.in_en0().bit(true)
             });
-        }
     }
+}
