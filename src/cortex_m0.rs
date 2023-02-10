@@ -39,7 +39,7 @@ use pac::SCB;
 /// 3. Enables the Cortex-M4 (CM4) core
 #[cortex_m_rt::pre_init]
 unsafe fn before_main() {
-    use crate::clock_init;
+    use crate::config_sys_clk;
     use crate::enable_cm4;
 
     // Initialize the CM0 vector table address in the CM0P_SCS_VTOR register
@@ -47,7 +47,7 @@ unsafe fn before_main() {
     (*SCB::PTR).vtor.write(vtor_addr as u32 - 4);
 
     // Initialize clocks
-    clock_init();
+    config_sys_clk();
 
     // Enable the CM4 core
     enable_cm4();
@@ -67,8 +67,7 @@ fn main() -> ! {
     unsafe {
         let gpio = &*pac::GPIO::PTR;
                 
-        configure_led(gpio);
-        configure_switch(gpio);
+        config_gpio(gpio);
 
         loop {
             if (*gpio).prt7.in_.read().in0().bit_is_clear() {
@@ -81,27 +80,17 @@ fn main() -> ! {
 	}
 }
 
-/// Set-up the relevant GPIO port/pin for the LED
-fn configure_led(gpio: *const GPIO::RegisterBlock) {
-    let strong_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::STRONG.into();
-    unsafe {    
-        (*gpio)
-            .prt12
-            .cfg
-            .write(|w| w.drive_mode2().bits(strong_value));
-    }
-}
-
-/// Set-up the relevant GPIO port/pin for the switch
-fn configure_switch(gpio: *const GPIO::RegisterBlock) {
+/// Set-up the relevant GPIO port/pins for LED4 and SW1
+fn config_gpio(gpio: *const GPIO::RegisterBlock) {
     let high_z_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::HIGHZ.into();
-    unsafe {
-        (*gpio)
-            .prt7
-            .cfg
-            .write(|w| { 
-                w.drive_mode0().bits(high_z_value);
-                w.in_en0().bit(true)
-            });
+    let strong_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::STRONG.into();
+
+    unsafe {    
+        (*gpio).prt12.cfg.modify(|_, w| w.drive_mode2().bits(strong_value));
+
+        (*gpio).prt7.cfg.modify(|_, w| w 
+            .drive_mode0().bits(high_z_value)
+            .in_en0().bit(true)
+        );
     }
 }

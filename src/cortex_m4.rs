@@ -51,11 +51,7 @@ fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
     let syst = cp.SYST;
 
-    // Peripheral registers
-    let p = pac::Peripherals::take().unwrap();
-
-    let gpio = p.GPIO;
-    configure_led(&gpio);
+    let gpio = config_gpio();
 
     let mut delay = Delay::new(syst, get_core_frequency());
 
@@ -67,7 +63,13 @@ fn main() -> ! {
 }
 
 /// Set-up the relevant GPIO port/pin for the LED
-fn configure_led(gpio: &pac::GPIO) {
+fn config_gpio() -> pac::GPIO {
+    // Peripheral registers
+    let p = pac::Peripherals::take().unwrap();
+    let gpio = p.GPIO;
+
     let strong_value: u8 = GPIO::prt::cfg::DRIVE_MODE0_A::STRONG.into();
     gpio.prt19.cfg.write(|w| w.drive_mode0().bits(strong_value));
+
+    gpio
 }
