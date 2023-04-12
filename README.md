@@ -1,4 +1,4 @@
-<img src="./media/ifx-logo-600.gif" align="right" width="150" />  
+<img src="./media/ifx-logo-600.jpg" align="right" width="150" />  
 
 #  gpio-access-t2g-bodyentry-starterkit
 **A simple, baremetal example, written in Rust, which toggles one LED periodically and the other based on the status of a switch**
