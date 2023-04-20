@@ -13,7 +13,7 @@ The board used for testing is the [TRAVEO™ II Body Entry Family Starter Kit](h
 
 ## Scope of Work
 
-This tutorial demonstrates the usage of TRAVEO™ T2G Peripheral Access Crates _(TODO: link to correct PAL crate)_ to access GPIO registers from both cores:
+This tutorial demonstrates the usage of TRAVEO™ T2G Peripheral Access Crates (PACs) to access GPIO registers from both cores:
 - From the startup core, CM0, LED1 is turned ON by default and is turned OFF whenever SW1 is pressed. All peripherals access is done using using _unsafe Rust_ (i.e. inside `unsafe` blocks)
 - From the application core, CM4, LED4 is toggled periodically. All peripheral access is done using _safe Rust_
 
