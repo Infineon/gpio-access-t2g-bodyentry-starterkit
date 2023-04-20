@@ -5,7 +5,7 @@
 
 ## Device
 
-The device used in this example is [TRAVEO™ CYT2B75](https://www.infineon.com/cms/en/product/microcontroller/32-bit-traveo-t2g-arm-cortex-microcontroller/32-bit-traveo-t2g-arm-cortex-for-body/traveo-t2g-cyt2b7-series/). 
+The device used in this example is [TRAVEO™ T2G CYT2B75](https://www.infineon.com/cms/en/product/microcontroller/32-bit-traveo-t2g-arm-cortex-microcontroller/32-bit-traveo-t2g-arm-cortex-for-body/traveo-t2g-cyt2b7-series/). 
 
 ## Board
 
@@ -51,7 +51,7 @@ The development board is powered-on and debugged using a micro-USB cable connect
 
 ## Development Environment
 
-A list of all requirements is given below. For detailed steps please refer to the setup instruction (TODO: link to the setup-instructions repository).
+A list of all requirements is given below. For detailed steps please refer to the [setup instructions](https://github.com/Infineon/traveo-rs-user-guide/blob/main/setup-instructions/README.md).
 
 - VSCode with the following extensions:
     - Cortex-Debug
@@ -139,8 +139,23 @@ To start debugging, connect the micro-USB cable to the PC. From the VSCode Activ
 
 Debugging and stepping through code should be possible now. Both CM0 and CM4 can be debugged independently.
 
-<img src="./media/active-debug-session.jpg" width="800" />
+<img src="./media/active-debug-session.png" width="800" />
 
 The semihosting output can be seen in the GDB Server output:
 
-<img src="./media/gdb-server.jpg" width="800" />
+<img src="./media/gdb-server.jpg" width="600" />
+
+# References
+User guide for Rust for TRAVEO™ T2G devices:
+- https://github.com/Infineon/traveo-rs-user-guide/blob/main/README.md
+
+Rust blogs in the Infineon Developer Community:
+- https://community.infineon.com/t5/tag/Rust/tg-p/board-id/Blogs
+
+Embedded Rust:
+- https://docs.rust-embedded.org/book/
+- https://github.com/rust-embedded
+
+TRAVEO™ T2G CYT2B7 Series
+- https://www.infineon.com/cms/en/product/microcontroller/32-bit-traveo-t2g-arm-cortex-microcontroller/32-bit-traveo-t2g-arm-cortex-for-body/traveo-t2g-cyt2b7-series/
+
