@@ -135,7 +135,7 @@ The development board is powered-on and debugged using a micro-USB cable connect
 
 To start debugging, connect the micro-USB cable to the PC. From the VSCode Activity Bar, click `'Run and Debug'`, select the `'openocd Debug M0 [master]'` target and press `F5`.
 
-<img src="./media/start-debug-session.jpg" width="800" />
+<img src="./media/start-debug-session.jpg" width="500" />
 
 Debugging and stepping through code should be possible now. Both CM0 and CM4 can be debugged independently.
 
